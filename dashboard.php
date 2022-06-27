@@ -32,10 +32,6 @@
     </nav>
     <div class="justify-content-center" style="color: white; margin-top:5%">
 
-      <?php if (isset($_GET['message'])) {
-        echo "<script> alert('You Just Logged Out')</script>";
-      }
-      ?>
       <h1 class="">
         Welcome to Zuri Authentication
         <?php session_start();
