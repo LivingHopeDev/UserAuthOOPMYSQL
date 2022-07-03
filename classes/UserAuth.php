@@ -20,9 +20,10 @@ class UserAuth extends Dbh
         if ($this->getUserByEmail($email)) {
             echo "email already exist";
         } else {
-            // var_dump($conn);
+            // print_r($conn);
             if ($this->confirmPasswordMatch($password, $confirmPassword)) {
-                $sql = "INSERT INTO Students (`full_names`, `email`, `password`, `country`, `gender`) VALUES ('$fullname','$email', '$password', '$country', '$gender')";
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $sql = "INSERT INTO Students (`full_names`, `email`, `password`, `country`, `gender`) VALUES ('$fullname','$email', '$hashed_password', '$country', '$gender')";
                 if ($conn->query($sql)) {
                     echo "Registration done successfully";
                 } else {
@@ -35,19 +36,37 @@ class UserAuth extends Dbh
     public function login($email, $password)
     {
         $conn = $this->db->connect();
-        $sql = "SELECT * FROM Students WHERE email='$email' AND `password`='$password'";
+        // $hashed_password = "SELECT `password` FROM Students WHERE email='$email' LIMIT 1";
+        $sql = "SELECT * FROM Students WHERE email='$email' LIMIT 1";
         $result = $conn->query($sql);
-        if ($result->num_rows > 0) {
-            $row = mysqli_fetch_assoc($result);
+        while ($row = $result->fetch_assoc()) {
+            $hashed_password = $row["password"];
             $_SESSION['full_names'] = $row['full_names'];
-            header("Location: ./dashboard.php");
-        } else {
-            echo
-            '<script>alert("incorrect email or password");
+            $dehash_password = password_verify($password, $hashed_password);
+            if ($dehash_password) {
+                header("Location: ./dashboard.php");
+            } else {
+                echo
+                '<script>alert("incorrect email or password");
                                      window.location="forms/login.php";
                                   </script>';
-            // header("Location: forms/login.php");
+            }
         }
+
+        //     // $sql = "SELECT * FROM Students WHERE email='$email' AND `password`='$dehash_password'";
+        //     // $result = $conn->query($sql);
+        //     // if ($result->num_rows > 0) {
+        //     //     $row = mysqli_fetch_assoc($result);
+        //     //     $_SESSION['full_names'] = $row['full_names'];
+        //     //     header("Location: ./dashboard.php");
+        //     // } else {
+        //     //     echo
+        //     //     '<script>alert("incorrect email or password");
+        //     //                              window.location="forms/login.php";
+        //     //                           </script>';
+        //     //     // header("Location: forms/login.php");
+        //     // }
+        // }
     }
 
     // public function getUser($username){
@@ -112,7 +131,8 @@ class UserAuth extends Dbh
     {
 
         $conn = $this->db->connect();
-        $sql = "UPDATE students SET password = '$password' WHERE email = '$email'";
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $sql = "UPDATE students SET password = '$hashed_password' WHERE email = '$email'";
         if ($conn->query($sql) === TRUE) {
             header("Location: ./dashboard.php?update=success");
         } else {
